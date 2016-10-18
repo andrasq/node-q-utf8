@@ -1,0 +1,19 @@
+{
+  "name": "q-utf8",
+  "version": "0.1.0",
+  "main": "index.js",
+  "description": "js-only js string to/from byte conversion",
+  "license": "Apache-2.0",
+  "repository": {
+    "url": "git://github.com/andrasq/node-q-utf8"
+  },
+  "keywords": [ "js", "strings", "convert", "utf8", "Andras" ],
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "scripts": {
+    "coverage": "nyc --reporter lcov --reporter text node test-*.js",
+    "test": "node test-*.js"
+  }
+}
