@@ -36,6 +36,7 @@ function stringLength( buf, base, bound, encoding ) {
         }
         break;
     case 'hex': return (bound - base) * 2;
+    case 'base64': return 4 * Math.ceil((bound - base) / 3);
     default: return buf.toString(encoding, base, bound).length;
     }
     return length;

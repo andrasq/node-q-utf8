@@ -9,29 +9,29 @@ Api
 
     var qutf8 = require('q-utf8');
 
-### qutf8.utf8_encode
+### qutf8.utf8_encode( string, from, to, target, offset )
 
-convert the string to utf8 bytes
+convert the substring to utf8 and place the bytes into target starting at offset
 
-### qutf8.utf8_decode
+### qutf8.utf8_decode( buf, base, bound )
 
-convert the utf8 bytes to a string
+convert the range of utf8 bytes to a string
 
-### qutf8.utf8_encodeJson
+### qutf8.utf8_encodeJson( string, from, to, target, offset )
 
-like utf8_encode, but control chars 0x00..0x19 are \-escaped `\n` or \u-escaped
+like utf8_encode, but control chars 0x00..0x19 are \\-escaped `\n` or \\u-escaped
 `\u0001`
 
-### qutf8.utf8_stringLength
+### qutf8.utf8_stringLength( buf, base, bound [,encoding] )
 
 length of the utf8 substring represented by the bytes between base and bound.
-Bytes not tested to be valid utf8.
+Bytes not tested to be valid for the encoding.  Default encoding is 'utf8'.
 
-### qutf8.utf8_byteLength
+### qutf8.utf8_byteLength( string, from, to )
 
-number of bytes the string will occupy when output
+number of bytes the string will occupy when output or stored in a Buffer
 
-### qutf8.utf8_encodeOverlong
+### qutf8.utf8_encodeOverlong( string, from, to, target, offset )
 
 like utf8_encode but `'\0'` chars are encoded as `'\xC0\x80'` not `'\u0000'`.
 `C0 80` and `E0 80 80` are valid utf8 and both decode into a `00` character.
