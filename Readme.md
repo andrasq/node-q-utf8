@@ -54,10 +54,17 @@ this is an experiment, a work in progress.
 Over time it evolved into a work-alike of `require('string_decoder')`.
 
 
+Change Log
+----------
+
+- 0.1.0 - initial version, to get it out there
+
+
 Todo
 ----
 
 - benchmarks
+- reconcile method names, eg encodeUtf8 vs utf8_encode
 
 
 Related Work
