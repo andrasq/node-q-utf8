@@ -63,6 +63,7 @@ Change Log
 Todo
 ----
 
+- unit tests
 - benchmarks
 - reconcile method names, eg encodeUtf8 vs utf8_encode
 
