@@ -2,7 +2,7 @@
   "name": "q-utf8",
   "version": "0.1.0",
   "main": "index.js",
-  "description": "js-only js string to/from byte conversion",
+  "description": "js-only utf8 string to bytes conversions",
   "license": "Apache-2.0",
   "repository": {
     "url": "git://github.com/andrasq/node-q-utf8"

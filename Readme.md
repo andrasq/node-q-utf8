@@ -1,7 +1,15 @@
 q-utf8
 ======
 
-js-only string to/from bytes conversion functions
+Js-only utf8 string manipulation.
+
+The native nodejs utf8 conversion functions are implemented as fast native C++
+modules.  Nodejs, however, is rather slow to call native modules.  For short
+strings the call overhead outweighs the benefits, and it is faster (sometimes
+much faster) to compute the results in javascript.
+
+These functions were originally developed as part of the
+[`qbson`](https://github.com/andrasq/node-qbson) library.
 
 
 Api
@@ -44,3 +52,9 @@ encode the byte range as a base64 string
 
 this is an experiment, a work in progress.
 Over time it evolved into a work-alike of `require('string_decoder')`.
+
+
+Related Work
+------------
+
+- [`qbson`](https://github.com/andrasq/node-qbson') - mongodb bson conversion functions
