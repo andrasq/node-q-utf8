@@ -152,3 +152,6 @@ function fragSizeBase64( buf, base, bound ) {
 function charLengthBase64( ch ) {
     return 3;
 }
+
+// accelerate access
+JsonDecoder.prototype = JsonDecoder.prototype;
