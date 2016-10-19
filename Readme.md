@@ -52,11 +52,11 @@ encoding is 'utf8'.
 return the number of bytes needed to store the specified portion of the string.
 Examines the string, does not use `Buffer.byteLength`.
 
-### qutf8.base64_encode
+### qutf8.base64_encode( buf, base, bound )
 
 encode the byte range as a base64 string
 
-### qutf8.JsonDecoder
+### qutf8.JsonDecoder( encoding )
 
 this is an experiment, a work in progress.
 Over time it evolved into a work-alike of `require('string_decoder')`.
