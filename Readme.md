@@ -19,30 +19,38 @@ Api
 
 ### qutf8.utf8_encode( string, from, to, target, offset )
 
-convert the substring to utf8 and place the bytes into target starting at offset
+encode the substring between `from` and `to` as utf8 bytes into the buffer
+starting at offset, and return the number of bytes written.  Does not check
+for overflow. The converted bytes are identical to `buffer.write`. Does not
+use `string.slice` or `buffer.write`.
 
 ### qutf8.utf8_decode( buf, base, bound )
 
-convert the range of utf8 bytes to a string
+return the utf8 encoded string in the buffer between offset and limit.
+Traverses the buffer, does not use `buffer.toString`. Note: for non-trivial
+strings buffer.toString() is faster.
 
 ### qutf8.utf8_encodeJson( string, from, to, target, offset )
 
 like utf8_encode, but control chars 0x00..0x19 are \\-escaped `\n` or \\u-escaped
-`\u0001`
-
-### qutf8.utf8_stringLength( buf, base, bound [,encoding] )
-
-length of the utf8 substring represented by the bytes between base and bound.
-Bytes not tested to be valid for the encoding.  Default encoding is 'utf8'.
-
-### qutf8.utf8_byteLength( string, from, to )
-
-number of bytes the string will occupy when output or stored in a Buffer
+`\u0001` and backslashes `\\` and double quotes `"` are backslash-escaped as `\\\\` and `\\"`.
 
 ### qutf8.utf8_encodeOverlong( string, from, to, target, offset )
 
 like utf8_encode but `'\0'` chars are encoded as `'\xC0\x80'` not `'\u0000'`.
 `C0 80` and `E0 80 80` are valid utf8 and both decode into a `00` character.
+
+### qutf8.utf8_stringLength( buf, base, bound [,encoding] )
+
+return the length of the utf8 encoded string found in the buffer between
+offset and limit.  The string is presumed valid utf8 and is not tested for
+validity. Examines the buffer, does not use `buffer.toString`.  Default
+encoding is 'utf8'.
+
+### qutf8.utf8_byteLength( string, from, to )
+
+return the number of bytes needed to store the specified portion of the string.
+Examines the string, does not use `Buffer.byteLength`.
 
 ### qutf8.base64_encode
 
