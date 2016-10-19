@@ -1,6 +1,9 @@
 /**
  * base64 encode bytes, from qbson object-id.js
  *
+ * Copyright (C) 2016 Andras Radics
+ * Licensed under the Apache License, Version 2.0
+ *
  * 2016-10-18 - AR.
  */
 
