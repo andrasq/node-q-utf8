@@ -33,12 +33,12 @@ strings buffer.toString() is faster.
 ### qutf8.utf8_encodeJson( string, from, to, target, offset )
 
 like utf8_encode, but control chars 0x00..0x19 are \\-escaped `\n` or \\u-escaped
-`\u0001` and backslashes `\\` and double quotes `"` are backslash-escaped as `\\\\` and `\\"`.
+`\u0001` and backslashes `\` and double quotes `"` are backslash-escaped as `\\` and `\"`.
 
 ### qutf8.utf8_encodeOverlong( string, from, to, target, offset )
 
-like utf8_encode but `'\0'` chars are encoded as `'\xC0\x80'` not `'\u0000'`.
-`C0 80` and `E0 80 80` are valid utf8 and both decode into a `00` character.
+like utf8_encode but `'\0'` chars are encoded as `\xC0\x80` not `\u0000`.
+`C0 80` and `E0 80 80` are valid utf8 bytes and both decode into a `00` character.
 
 ### qutf8.utf8_stringLength( buf, base, bound [,encoding] )
 
