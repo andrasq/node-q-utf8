@@ -58,8 +58,9 @@ encode the byte range as a base64 string
 
 ### qutf8.JsonDecoder( encoding )
 
-this is an experiment, a work in progress.
-Over time it evolved into a work-alike of `require('string_decoder')`.
+this was an experiment in reassembly of split utf8 byte strings, and is
+still a work in progress.  Over time it has evolved into a fast
+work-alike of `require('string_decoder')`.
 
 
 Change Log

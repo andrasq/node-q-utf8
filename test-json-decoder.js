@@ -15,9 +15,13 @@ var JsonDecoder = require('./json-decoder').JsonDecoder;
 var timeit = require('qtimeit');
 var string_decoder = require('string_decoder');
 
+var buf = new Buffer("Hello, world.\nHello, world.\n");
+var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");
 var buf = new Buffer("Hello, world.\n");
 var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");
-for (var len = 1; len <= 12; len+=1) {
+var maxPartLength = 12;
+var t1 = Date.now();
+for (var len = 1; len <= maxPartLength; len+=1) {
     var data = [];
     for (var i=0; i<buf.length; i+=len) data.push(buf.slice(i, i+len));
 
@@ -27,19 +31,22 @@ for (var len = 1; len <= 12; len+=1) {
     var arj = new JsonDecoder();
     timeit(100000, function(){ x = ''; for (var i=0; i<data.length; i++) x += arj.write(data[i]); arj.end(); });
     //console.log(x);
-    // 360k/s, ie 5 million buffers appended 1-ch, 600k/s 2-ch, 820k/s 3-ch, 1m/s 4-ch
+    // 335k/s, ie 5 million buffers appended 1-ch, 600k/s 2-ch, 835k/s 3-ch, 1m/s 4-ch ("Hello, world.")
 
     var sys = new string_decoder.StringDecoder();
     timeit(100000, function(){ x = ''; for (var i=0; i<data.length; i++) x += sys.write(data[i]); sys.end(); });
+    // 338k/s 1-ch, 630k/s 2-ch, 875k/s 3-ch, 1m/s 4-ch ("Hello, world.")
     //console.log(x);
 }
+var t2 = Date.now();
+console.log("AR: total test time %d ms", t2 - t1);
 
 /**/
 
 /**
 
 Notes:
-- above is 7-8% faster than the built-in StringDecoder for plain ascii
-- above is 30% slower for 2-byte uft8 of len 4,5 (but is 25% faster for len 3, 350% faster for 1, 1% slower for 2)
+- basically tied with StringDecoder for plain ascii, very slightly slower
+- 30% faster overall for multi-byte utf8, occasionally slightly slower for 2-ch buffers
 
 **/

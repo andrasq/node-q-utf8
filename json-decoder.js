@@ -24,18 +24,22 @@ function JsonDecoder( encoding ) {
 
     switch (encoding) {
     case 'utf8':
-        this.fragSize = fragSizeUtf8;
+        this.fragmentByteCount = fragSizeUtf8;
+        this.charByteCount = charLengthUtf8;
         break;
     case 'ucs2':
     case 'utf16':
-        this.fragSize = function(buf, base, bound) { return (bound - base) & 1 };
+        this.fragmentByteCount = function(buf, base, bound) { return (bound - base) & 1 };
+        this.charByteCount = function(ch) { return 2; }
         break;
     case 'base64':
-        this.fragSize = function(buf, base, bound) { return (bound - base) % 3 };
+        this.fragmentByteCount = function(buf, base, bound) { return (bound - base) % 3 };
+        this.charByteCount = function(ch) { return 3; }
         break;
     case 'hex':
     default:
-        this.fragSize = function(buf, base, bound) { return 0; };
+        this.fragmentByteCount = function(buf, base, bound) { return 0; };
+        this.charByteCount = function(ch) { return 1; }
         break;
     }
 }
@@ -45,29 +49,35 @@ function JsonDecoder( encoding ) {
  * prepending any previous fragment bytes and retaining any trailing ones
  */
 JsonDecoder.prototype.write = function write( buf ) {
-    var offset = 0, extra, fragString = '', bufString, str1, str2;
+    var offset = 0, extra, fragString, bufString;
 
     // first complete an existing fragment with bytes from the buffer
-    // TODO: not having the num needed chars (retesting after each byte) slows this 50% over StringDecoder
-    if (this.fragLength) while (offset < buf.length) {
-        this.fragBuf[this.fragLength++] = buf[offset++];
-        if (this.fragSize(this.fragBuf, 0, this.fragLength) === 0) break;
-    }
-    // if not enough bytes to complete the fragment, try next time
-    if (offset >= buf.length) return '';
+    if (this.fragLength) {
+        while (this.fragLength < this.fragNeededLength && offset < buf.length) {
+            this.fragBuf[this.fragLength++] = buf[offset++];
+        }
+        if (this.fragLength < this.fragNeededLength) return '';
 
-    // convert the fragment to string
-    if (this.fragLength) str1 = this.fragBuf.toString(this.encoding, 0, this.fragLength);
+        // convert the fragment to string
+        fragString = this.fragBuf.toString(this.encoding, 0, this.fragLength);
+    }
 
     // convert the remainder of the buffer to string
-    extra = this.fragSize(buf, offset, buf.length);
-    str2 = buf.toString(this.encoding, offset, buf.length - extra);
+    extra = this.fragmentByteCount(buf, offset, buf.length);
+    bufString = buf.toString(this.encoding, offset, buf.length - extra);
 
     // save any new fragment at the end of the buffer for next time
-    if (extra) this.fragLength = bufcpy(this.fragBuf, 0, buf, buf.length - extra, extra);
+    if (extra) {
+        this.fragLength = bufcpy(this.fragBuf, 0, buf, buf.length - extra, extra);
+        this.fragNeededLength = this.charByteCount(this.fragBuf[0]);
+    }
+    else {
+        this.fragLength = 0;
+        this.fragNeededLength = 0;
+    }
 
     // return the buffer appended to the fragment
-    return str1 ? str1 + str2 : str2;
+    return fragString ? fragString + bufString : bufString;
 };
 
 /*
@@ -92,7 +102,7 @@ JsonDecoder.prototype = JsonDecoder.prototype;
 
 // copy buffer contents like memcpy(), but returns the number of bytes copied
 function bufcpy( dst, p2, src, p1, n ) {
-    for (var i=0; i<n; i++) dst[p2 + i] = src[p1 + i];
+    for (var i=0; i<n; i++) dst[p2++] = src[p1++];
     return n;
 }
 
@@ -108,11 +118,21 @@ function fragSizeUtf8( buf, base, bound ) {
     // each test checks whether that char starts a split multi-byte char
     switch (bound - base) {
     default:
-    case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char (not js)
+    //case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char (not js)
     case 2: if ((buf[bound-2] & 0xE0) === 0xE0) return 2;       // 1110xxxx 3+ byte char
     case 1: if ((buf[bound-1] & 0xC0) === 0xC0) return 1;       // 110xxxxx 2+ byte char
     case 0: return 0;
     }
+}
+
+// return the length in bytes of the multi-byte utf8 encoding starting with the given byte
+// 16-bit javascript utf8 only has 2-, and 3-byte encodings
+function charLengthUtf8( ch ) {
+    //if (ch >= 0xF0) return 4; else
+    if (ch >= 0xE0) return 3;
+    else /* if (ch >= 0xC0) */ return 2;
+    // if (ch >= 0x80) invalid
+    //else return 1;
 }
 
 // hex encodes one byte as two chars
@@ -120,7 +140,15 @@ function fragSizeHex( buf, base, bound ) {
     return 0;
 }
 
+function charLengthHex( ch ) {
+    return 1;
+}
+
 // base64 encodes groups of three bytes into four chars
 function fragSizeBase64( buf, base, bound ) {
     return (bound - base) % 3;
+}
+
+function charLengthBase64( ch ) {
+    return 3;
 }
