@@ -66,7 +66,7 @@ work-alike of `require('string_decoder')`.
 Change Log
 ----------
 
-- 0.1.1 - speed up JsonDecoder, up to 30% faster than `string_decoder`
+- 0.1.1 - speed up JsonDecoder, now up to 50% faster than `string_decoder`
 - 0.1.0 - initial version, to get it out there
 
 

@@ -12,13 +12,16 @@ var JsonDecoder = require('./json-decoder').JsonDecoder;
 // quicktest:
 ///**
 
+var assert = require('assert');
 var timeit = require('qtimeit');
 var string_decoder = require('string_decoder');
 
 var buf = new Buffer("Hello, world.\nHello, world.\n");
 var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");
-var buf = new Buffer("Hello, world.\n");
-var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");
+var buf = new Buffer("Hello, world.\n");        // plaintext
+//var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");       // 2-byte utf8 chars
+//var buf = new Buffer("\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000"); // 3-byte utf8 chars
+console.log(buf);
 var maxPartLength = 12;
 var t1 = Date.now();
 for (var len = 1; len <= maxPartLength; len+=1) {
@@ -26,6 +29,10 @@ for (var len = 1; len <= maxPartLength; len+=1) {
     for (var i=0; i<buf.length; i+=len) data.push(buf.slice(i, i+len));
 
     console.log("parts of len", len);
+
+    var arj = new JsonDecoder();
+    var sys = new string_decoder.StringDecoder();
+    for (var i=0; i<data.length; i++) assert(arj.write(data[i]) === sys.write(data[i]));
 
     var x = '';
     var arj = new JsonDecoder();

@@ -97,8 +97,6 @@ JsonDecoder.prototype.end = function end( buffer ) {
     return str;
 }
 
-JsonDecoder.prototype = JsonDecoder.prototype;
-
 
 // copy buffer contents like memcpy(), but returns the number of bytes copied
 function bufcpy( dst, p2, src, p1, n ) {
@@ -107,7 +105,7 @@ function bufcpy( dst, p2, src, p1, n ) {
 }
 
 /*
- * fragSize return the number of bytes belonging to a split last symbol,
+ * fragSize returns the number of bytes belonging to a split last symbol,
  * or 0 if the last symbol is not split.  In some encodings each symbol is
  * itself encoded with multiple characters (eg hex and base64).
  */
@@ -118,7 +116,7 @@ function fragSizeUtf8( buf, base, bound ) {
     // each test checks whether that char starts a split multi-byte char
     switch (bound - base) {
     default:
-    //case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char (not js)
+    case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char (not js)
     case 2: if ((buf[bound-2] & 0xE0) === 0xE0) return 2;       // 1110xxxx 3+ byte char
     case 1: if ((buf[bound-1] & 0xC0) === 0xC0) return 1;       // 110xxxxx 2+ byte char
     case 0: return 0;
@@ -128,7 +126,7 @@ function fragSizeUtf8( buf, base, bound ) {
 // return the length in bytes of the multi-byte utf8 encoding starting with the given byte
 // 16-bit javascript utf8 only has 2-, and 3-byte encodings
 function charLengthUtf8( ch ) {
-    //if (ch >= 0xF0) return 4; else
+    if (ch >= 0xF0) return 4; else
     if (ch >= 0xE0) return 3;
     else /* if (ch >= 0xC0) */ return 2;
     // if (ch >= 0x80) invalid
