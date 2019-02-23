@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Andras Radics
+ * Copyright (C) 2016-2019 Andras Radics
  * Licensed under the Apache License, Version 2.0
  */
 
@@ -22,7 +22,7 @@ var buf = new Buffer("Hello, world.\n");        // plaintext
 //var buf = new Buffer("\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82\x81\x82");       // 2-byte utf8 chars
 //var buf = new Buffer("\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000\uf000"); // 3-byte utf8 chars
 console.log(buf);
-var maxPartLength = 12;
+var maxPartLength = 13;
 var t1 = Date.now();
 for (var len = 1; len <= maxPartLength; len+=1) {
     var data = [];
@@ -36,12 +36,12 @@ for (var len = 1; len <= maxPartLength; len+=1) {
 
     var x = '';
     var arj = new JsonDecoder();
-    timeit(100000, function(){ x = ''; for (var i=0; i<data.length; i++) x += arj.write(data[i]); arj.end(); });
+    timeit(1000000, function(){ x = ''; for (var i=0; i<data.length; i++) x = arj.write(data[i]); arj.end(); });
     //console.log(x);
     // 335k/s, ie 5 million buffers appended 1-ch, 600k/s 2-ch, 835k/s 3-ch, 1m/s 4-ch ("Hello, world.")
 
     var sys = new string_decoder.StringDecoder();
-    timeit(100000, function(){ x = ''; for (var i=0; i<data.length; i++) x += sys.write(data[i]); sys.end(); });
+    timeit(1000000, function(){ x = ''; for (var i=0; i<data.length; i++) x = sys.write(data[i]); sys.end(); });
     // 338k/s 1-ch, 630k/s 2-ch, 875k/s 3-ch, 1m/s 4-ch ("Hello, world.")
     //console.log(x);
 }
@@ -55,5 +55,7 @@ console.log("AR: total test time %d ms", t2 - t1);
 Notes:
 - basically tied with StringDecoder for plain ascii, very slightly slower
 - 30% faster overall for multi-byte utf8, occasionally slightly slower for 2-ch buffers
+- node-v10 and v11 slow down this code (eg 3.3m/s vs 5m/s), so the system built-in is faster
+- TODO: remove non-utf8 string decoding from this version, keep this purely utf8
 
 **/
