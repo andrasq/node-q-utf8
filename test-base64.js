@@ -16,6 +16,7 @@ assert.equal(base64_encode(new Buffer("aaaa")), "YWFhYQ==");
 assert.equal(base64_encode(new Buffer("abc")), "YWJj");
 assert.equal(base64_encode(new Buffer("1234567890")), "MTIzNDU2Nzg5MA==");
 
+assert.equal(base64_encode(new Buffer("abc"), 1, 0), "");
 assert.equal(base64_encode(new Buffer("abc"), 1, 2), "Yg==");
 assert.equal(base64_encode(new Buffer("abc"), 1, 3), "YmM=");
 assert.equal(base64_encode(new Buffer("abc"), 1, 7), "YmM=");

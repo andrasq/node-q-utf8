@@ -26,7 +26,7 @@ module.exports = {
     _base64urldigits: _base64urldigits,
     bytesToBase64: bytesToBase64,
     encode: function base64_encode( bytes, base, bound ) {
-        if (!bound || bound > bytes.length) bound = bytes.length;
+        if (bound == null || bound > bytes.length) bound = bytes.length;
         if (!base || base < 0) base = 0;
         var str = module.exports.bytesToBase64(bytes, base, bound, _base64digits);
         if (str.length & 0x03) str += _base64pad[str.length & 0x03];
