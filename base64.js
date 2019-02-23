@@ -16,7 +16,8 @@ for (var i=0; i<64; i++) _base64digits[i] = _base64charset[i];
 var _base64pad = [ '', '===', '==', '=' ];
 
 // base64url uses the same chars except for the last two changing from '+/' to '-_'
-var _base64urldigits = new Array(_base64digits);
+var _base64urldigits = new Array(64);
+for (var i=0; i<64; i++) _base64urldigits[i] = _base64charset[i];
 _base64urldigits[62] = '-';
 _base64urldigits[63] = '_';
 
@@ -33,6 +34,14 @@ module.exports = {
         return str;
     },
     // decode: TBD
+    encodeurl: function base64_encodeurl( bytes, base, bound ) {
+        if (bound == null || bound > bytes.length) bound = bytes.length;
+        if (!base || base < 0) base = 0;
+        var str = module.exports.bytesToBase64(bytes, base, bound, _base64urldigits);
+        // base64url encoding does not pad the encoded string
+        return str;
+    },
+    // decodeurl: TBD
 };
 
 
