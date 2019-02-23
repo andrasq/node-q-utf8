@@ -28,6 +28,7 @@ module.exports = {
     bytesToBase64: bytesToBase64,
     encode: function base64_encode( bytes, base, bound ) {
         var str = module.exports.bytesToBase64(bytes, base, bound, _base64digits);
+        // base64 encoding must pad the result with '=' to a multiple of 4 chars
         if (str.length & 0x03) str += _base64pad[str.length & 0x03];
         return str;
     },
@@ -49,16 +50,12 @@ function bytesToBase64( bytes, base, bound, digits ) {
     if (!base || base < 0) base = 0;
 
     var str = "";
-    for (var i=base; i<bound-3; i+=3) {
+    for (var i=base; i<=bound-3; i+=3) {
         str += _emit3base64(digits, bytes[i], bytes[i+1], bytes[i+2]);
     }
-    switch (bound - i) {
-    case 3: str += _emit3base64(digits, bytes[i], bytes[i+1], bytes[i+2]); i += 3; break;
-    case 2: str += _emit2base64(digits, bytes[i], bytes[i+1]); i += 2; break;
-    case 1: str += _emit1base64(digits, bytes[i]); i += 1; break;
-    }
-    // base64 encoding must pad the result with '=' to a multiple of 4 chars
-    return str;
+    if (i >= bound) return str;
+    return ((bound - i) == 2) ? str + _emit2base64(digits, bytes[i], bytes[i+1])
+                              : str + _emit1base64(digits, bytes[i]);
 }
 
 function _emit3base64( digits, a, b, c ) {
