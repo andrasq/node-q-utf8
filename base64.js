@@ -27,16 +27,12 @@ module.exports = {
     _base64urldigits: _base64urldigits,
     bytesToBase64: bytesToBase64,
     encode: function base64_encode( bytes, base, bound ) {
-        if (bound == null || bound > bytes.length) bound = bytes.length;
-        if (!base || base < 0) base = 0;
         var str = module.exports.bytesToBase64(bytes, base, bound, _base64digits);
         if (str.length & 0x03) str += _base64pad[str.length & 0x03];
         return str;
     },
     // decode: TBD
     encodeurl: function base64_encodeurl( bytes, base, bound ) {
-        if (bound == null || bound > bytes.length) bound = bytes.length;
-        if (!base || base < 0) base = 0;
         var str = module.exports.bytesToBase64(bytes, base, bound, _base64urldigits);
         // base64url encoding does not pad the encoded string
         return str;
@@ -44,12 +40,14 @@ module.exports = {
     // decodeurl: TBD
 };
 
-
 /*
  * extract the byte range from the buffer as a base64 string
  * for 12 bytes 10% slower than buf.toString, is faster for fewer
  */
 function bytesToBase64( bytes, base, bound, digits ) {
+    if (bound == null || bound > bytes.length) bound = bytes.length;
+    if (!base || base < 0) base = 0;
+
     var str = "";
     for (var i=base; i<bound-3; i+=3) {
         str += _emit3base64(digits, bytes[i], bytes[i+1], bytes[i+2]);

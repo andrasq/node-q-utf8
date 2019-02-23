@@ -27,5 +27,6 @@ var src2 = new Buffer(src);
 var x;
 require("qtimeit")(2000000, function() { x = base64.encode(src) });
 require("qtimeit")(2000000, function() { x = base64.encode(src2) });
+require("qtimeit")(2000000, function() { x = base64.encodeurl(src2) });
 //require("qtimeit")(2000000, function() { x = base64.bytesToBase64(src2, 0, src2.length, base64._base64digits) });  // about the same
 require("qtimeit")(2000000, function() { x = src2.toString("base64") });
