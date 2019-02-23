@@ -1,6 +1,6 @@
 {
   "name": "q-utf8",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "index.js",
   "description": "js-only utf8 string to bytes conversions",
   "license": "Apache-2.0",
