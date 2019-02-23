@@ -158,7 +158,7 @@ for (var i=0; i<hexCharCodes.length; i++) hexCharCodes[i] = hexCharCodes[i].char
 // char codes for the control chars 0-0x1F.
 var backslashCharCodes = [
    0,   0,   0,   0,   0,   0,   0,   0,
-  'b', 't', 'n',  0, 'f', 'r',  0,   0,
+  'b', 't', 'n',  0,  'f', 'r',  0,   0,
    0,   0,   0,   0,   0,   0,   0,   0,
    0,   0,   0,   0,   0,   0,   0,   0,
 ];
@@ -190,7 +190,7 @@ function encodeJson( string, from, to, target, offset ) {
         code = string.charCodeAt(i);
         if (code <= 0x1F) offset = encodeJsonControlChar(code, target, offset); // control
         else if (code === 0x22) { target[offset++] = 0x5c; target[offset++] = 0x22; }  // "
-        else if (code === 0x5c) { target[offset++] = 0x5c; target[offset++] = 0x5c; }  // "
+        else if (code === 0x5c) { target[offset++] = 0x5c; target[offset++] = 0x5c; }  // \
         else if (code <= 0x7F) target[offset++] = code;  // ascii
         else if (code >= 0xD800 && code <= 0xDFFF) {  // invalid
             target[offset++] = 0xEF; target[offset++] = 0xBF; target[offset++] = 0xBD;
