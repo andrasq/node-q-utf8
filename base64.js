@@ -28,7 +28,9 @@ module.exports = {
     encode: function base64_encode( bytes, base, bound ) {
         if (!bound || bound > bytes.length) bound = bytes.length;
         if (!base || base < 0) base = 0;
-        return module.exports.bytesToBase64(bytes, base, bound);
+        var str = module.exports.bytesToBase64(bytes, base, bound);
+        if (str.length & 0x03) str += _base64pad[str.length & 0x03];
+        return str;
     },
     // decode: TBD
 };
@@ -48,7 +50,7 @@ function bytesToBase64( bytes, base, bound ) {
     case 2: str += _emit2base64(bytes[i], bytes[i+1]); i += 2; break;
     case 1: str += _emit1base64(bytes[i]); i += 1; break;
     }
-    if (str.length & 0x3) str += _base64pad[str.length & 0x3];
+    // base64 encoding must pad the result with '=' to a multiple of 4 chars
     return str;
 }
 
