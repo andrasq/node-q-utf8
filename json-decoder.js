@@ -3,7 +3,7 @@
  *
  * Should be fully equivalent to require('string_decoder'), but not verified.
  *
- * Copyright (C) 2016 Andras Radics
+ * Copyright (C) 2016-2019 Andras Radics
  * Licensed under the Apache License, Version 2.0
  */
 
@@ -110,27 +110,34 @@ function bufcpy( dst, p2, src, p1, n ) {
  * itself encoded with multiple characters (eg hex and base64).
  */
 
-// utf8 encodes 1-4 bytes into one char
+// return how many bytes in buf just before bound belong to a split multi-byte char
+// If the bytes are not part of a split char, returns 0.  Does not test for valid utf-8.
+// utf8 encodes 1-4 bytes into one char (codepoint).
+// Note that javascript 16-bit codepoints always encode into 3 or fewer bytes
 function fragSizeUtf8( buf, base, bound ) {
     // use switch as a jump table, fall through each case
     // each test checks whether that char starts a split multi-byte char
     switch (bound - base) {
     default:
-    case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char (not js)
-    case 2: if ((buf[bound-2] & 0xE0) === 0xE0) return 2;       // 1110xxxx 3+ byte char
-    case 1: if ((buf[bound-1] & 0xC0) === 0xC0) return 1;       // 110xxxxx 2+ byte char
+    case 3: if ((buf[bound-3] & 0xF0) === 0xF0) return 3;       // 11110xxx 4+ byte char missing 4th
+    case 2: if ((buf[bound-2] & 0xE0) === 0xE0) return 2;       // 1110xxxx 3+ byte char missing 3rd or 3rd+4th
+    case 1: if ((buf[bound-1] & 0xC0) === 0xC0) return 1;       // 110xxxxx 2+ byte char missing 2nd or 2nd+3rd or 2nd+3rd+4th
     case 0: return 0;
     }
 }
 
 // return the length in bytes of the multi-byte utf8 encoding starting with the given byte
-// 16-bit javascript utf8 only has 2-, and 3-byte encodings
+// 16-bit javascript utf8 only has 2-, and 3-byte encodings ("\xFFFF" is still only 3 bytes)
+// This function is only called for multi-byte utf8 characters (none will be length 1),
+// and 4-byte codepoints are not valid in  javascripts, so all lengths will be 2 or 3.
 function charLengthUtf8( ch ) {
+    return (ch < 0xC0) ? 1 : (ch < 0xE0) ? 2 : (ch < 0xF0) ? 3 : 4;
+
     if (ch >= 0xF0) return 4; else
-    if (ch >= 0xE0) return 3;
-    else /* if (ch >= 0xC0) */ return 2;
+    if (ch >= 0xE0) return 3; else
+    if (ch >= 0xC0) return 2; else
     // if (ch >= 0x80) invalid
-    //else return 1;
+    return 1;
 }
 
 // hex encodes one byte as two chars
