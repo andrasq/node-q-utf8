@@ -9,7 +9,21 @@
 
 'use strict';
 
+
+var _base64charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var _base64digits = new Array(64);
+for (var i=0; i<64; i++) _base64digits[i] = _base64charset[i];
+var _base64pad = [ '', '===', '==', '=' ];
+
+// base64url uses the same chars except for the last two changing from '+/' to '-_'
+var _base64urldigits = new Array(_base64digits);
+_base64urldigits[62] = '-';
+_base64urldigits[63] = '_';
+
+
 module.exports = {
+    _base64digits: _base64digits,
+    _base64urldigits: _base64urldigits,
     bytesToBase64: bytesToBase64,
     encode: function base64_encode( bytes, base, bound ) {
         if (!bound || bound > bytes.length) bound = bytes.length;
@@ -19,11 +33,6 @@ module.exports = {
     // decode: TBD
 };
 
-var _base64charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-var _base64digits = new Array(64);
-for (var i=0; i<64; i++) _base64digits[i] = _base64charset.slice(i, i+1);
-
-var _base64pad = ['', '===', '==', '='];
 
 /*
  * extract the byte range from the buffer as a base64 string
