@@ -43,32 +43,32 @@ module.exports = {
 function bytesToBase64( bytes, base, bound, digits ) {
     var str = "";
     for (var i=base; i<bound-3; i+=3) {
-        str += _emit3base64(bytes[i], bytes[i+1], bytes[i+2]);
+        str += _emit3base64(digits, bytes[i], bytes[i+1], bytes[i+2]);
     }
     switch (bound - i) {
-    case 3: str += _emit3base64(bytes[i], bytes[i+1], bytes[i+2]); i += 3; break;
-    case 2: str += _emit2base64(bytes[i], bytes[i+1]); i += 2; break;
-    case 1: str += _emit1base64(bytes[i]); i += 1; break;
+    case 3: str += _emit3base64(digits, bytes[i], bytes[i+1], bytes[i+2]); i += 3; break;
+    case 2: str += _emit2base64(digits, bytes[i], bytes[i+1]); i += 2; break;
+    case 1: str += _emit1base64(digits, bytes[i]); i += 1; break;
     }
     // base64 encoding must pad the result with '=' to a multiple of 4 chars
     return str;
 }
 
-function _emit3base64( a, b, c ) {
-    return _base64digits[a >> 2] +
-           _base64digits[((a << 4) | (b >> 4)) & 0x3F] +
-           _base64digits[((b << 2) | (c >> 6)) & 0x3F] +
-           _base64digits[c & 0x3F];
+function _emit3base64( digits, a, b, c ) {
+    return digits[((a >> 2)) & 0x3F] +
+           digits[((a << 4) | (b >> 4)) & 0x3F] +
+           digits[((b << 2) | (c >> 6)) & 0x3F] +
+           digits[c & 0x3F];
 }
 
-function _emit2base64( a, b ) {
-    return _base64digits[a >> 2] +
-           _base64digits[(a & 0x3) << 4 | (b >> 4)] +
-           _base64digits[(b & 0xF) << 2];
+function _emit2base64( digits, a, b ) {
+    return digits[a >> 2] +
+           digits[(a & 0x3) << 4 | (b >> 4)] +
+           digits[(b & 0xF) << 2];
 }
 
-function _emit1base64( a ) {
-    return _base64digits[a >> 2] +
-           _base64digits[(a & 0x3) << 4];
+function _emit1base64( digits, a ) {
+    return digits[a >> 2] +
+           digits[(a & 0x3) << 4];
 }
 
