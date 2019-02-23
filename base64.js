@@ -29,22 +29,17 @@ module.exports = {
     encode: function base64_encode( bytes, base, bound ) {
         var str = module.exports.bytesToBase64(bytes, base, bound, _base64digits);
         // base64 encoding must pad the result with '=' to a multiple of 4 chars
-        if (str.length & 0x03) str += _base64pad[str.length & 0x03];
-        return str;
+        return (str.length & 0x03) ? str + _base64pad[str.length & 0x03] : str;
     },
     // decode: TBD
     encodeurl: function base64_encodeurl( bytes, base, bound ) {
-        var str = module.exports.bytesToBase64(bytes, base, bound, _base64urldigits);
+        return module.exports.bytesToBase64(bytes, base, bound, _base64urldigits);
         // base64url encoding does not pad the encoded string
-        return str;
     },
     // decodeurl: TBD
 };
 
-/*
- * extract the byte range from the buffer as a base64 string
- * for 12 bytes 10% slower than buf.toString, is faster for fewer
- */
+// extract the byte range from the buffer as a base64 string
 function bytesToBase64( bytes, base, bound, digits ) {
     if (bound == null || bound > bytes.length) bound = bytes.length;
     if (!base || base < 0) base = 0;
@@ -59,20 +54,12 @@ function bytesToBase64( bytes, base, bound, digits ) {
 }
 
 function _emit3base64( digits, a, b, c ) {
-    return digits[((a >> 2)) & 0x3F] +
-           digits[((a << 4) | (b >> 4)) & 0x3F] +
-           digits[((b << 2) | (c >> 6)) & 0x3F] +
-           digits[c & 0x3F];
+    return digits[(a >> 2) & 0x3F] + digits[((a & 0x3) << 4) | ((b >> 4) & 0xF)] + digits[((b & 0xF) << 2) | ((c >> 6) & 0x3F)] + digits[(c & 0x3F)];
 }
-
 function _emit2base64( digits, a, b ) {
-    return digits[a >> 2] +
-           digits[(a & 0x3) << 4 | (b >> 4)] +
-           digits[(b & 0xF) << 2];
+    return digits[(a >> 2) & 0x3F] + digits[((a & 0x3) << 4) | ((b >> 4) & 0xF)] + digits[((b & 0xF) << 2)];
 }
-
 function _emit1base64( digits, a ) {
-    return digits[a >> 2] +
-           digits[(a & 0x3) << 4];
+    return digits[(a >> 2) & 0x3F] + digits[((a & 0x3) << 4)];
 }
 

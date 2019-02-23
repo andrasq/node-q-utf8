@@ -22,6 +22,12 @@ assert.equal(base64_encode(new Buffer("abc"), 1, 3), "YmM=");
 assert.equal(base64_encode(new Buffer("abc"), 1, 7), "YmM=");
 assert.equal(base64_encode(new Buffer("abc"), -1, 7), "YWJj");
 
+var src = new Buffer("foobarfoobar");
+require("qtimeit")(2000000, function() { x = base64.encode(src) });
+require("qtimeit")(2000000, function() { x = src.toString("base64") });
+// base64 is 22m/s for 3 chars, 11m/s for 6 chars, 7.1m/s for 9 chars
+// Buffer.toString is 7.8m/s for 3 chars, 7.6m/s for 6 chars, 7.4m/s for 9 chars
+
 var src = "Hello, world.\n".split('').map(function(ch) { return ch.charCodeAt(0) });
 var src2 = new Buffer(src);
 var x;
