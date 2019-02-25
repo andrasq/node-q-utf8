@@ -173,8 +173,9 @@ function decodeUtf8( buf, base, bound ) {
     return str;
 }
 
+// TODO: think about whether full error checking is necessary.  The code runs 32% faster without (so 25% validation overhead)
 function scanStringZUtf8( buf, base, entity ) {
-    var ch, str = "", code;
+    var ch, ch2, ch3, ch4, str = "", code;
     for (var i=base; buf[i]; i++) {
         ch = buf[i];
         if (ch < 0x80) { str += String.fromCharCode(ch); continue; }    // 1-byte

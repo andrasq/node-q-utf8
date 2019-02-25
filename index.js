@@ -11,6 +11,7 @@ module.exports = {
     utf8_stringLength: utf8.stringLength,
     utf8_byteLength: utf8.byteLength,
     utf8_encodeOverlong: utf8.encodeUtf8Overlong,
+    utf8_scanStringZ: utf8.scanStringZUtf8,
 
     base64_encode: base64.encode,
     // base64_decode: TBD
