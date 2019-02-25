@@ -13,6 +13,7 @@ module.exports = {
     encodeUtf8: encodeUtf8,
     encodeJson: encodeJson,
     decodeUtf8: decodeUtf8,
+    scanStringZUtf8: scanStringZUtf8,
     stringLength: stringLength,
     byteLength: byteLength,
     utf8FragmentBytes: utf8FragmentBytes,
@@ -137,6 +138,26 @@ function encodeUtf8Overlong( string, from, to, target, offset ) {
  * Note: faster for short strings, slower for long strings
  * Note: generates more gc activity than buf.toString
  */
+// 1-byte utf8 0xxx xxxx
+// 2-byte utf8 110x xxxx 10xx xxxx
+// 3-byte utf8 1110 xxxx 10xx xxxx 10xx xxxx
+// 4-byte utf8 1111 0xxx 10xx xxxx 10xx xxxx 10xx xxxx -- not valid as javascript chars
+// NOTE: 4-byte utf8 chars will produce codepoints outside the javascript utf16 range,
+// and String.fromCharCode() will truncate them to 16 bits and break them.
+// Note: there are 1.1 million valid Unicode codepoints, 0 .. 0x10FFFF.
+// 66 are defined as non-characters, and 2048 are reserved for surrogate pairs.
+// Final Utf-8 standard is RFC-3629, http://tools.ietf.org/html/rfc3629
+
+// FIXME: Leading, also called high, surrogates are from D800 to DBFF, and trailing, or
+// low, surrogates are from DC00 to DFFF. They are called surrogates, since they do not
+// represent characters directly, but only as a pair.
+// AR: 1101 10xx xxxx xxxx -- 1101 11xx xxxx xxxx (good for 20-bit codepoints)
+// AR: see also https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+//
+// Unpaired surrogates are invalid in UTFs. These include any value in the range D80016 to
+// DBFF16 not followed by a value in the range DC0016 to DFFF16, or any value in the range
+// DC0016 to DFFF16 not preceded by a value in the range D80016 to DBFF16.
+
 function decodeUtf8( buf, base, bound ) {
     var ch, str = "", code;
     for (var i=base; i<bound; i++) {
@@ -146,6 +167,41 @@ function decodeUtf8( buf, base, bound ) {
         else if (ch < 0xF0) str += String.fromCharCode(((ch & 0x0F) << 12) + ((buf[++i] & 0x3F) << 6) + (buf[++i] & 0x3F));  // 1110 xxxx  10xx xxxx  10xx xxxx
     }
     return str;
+}
+
+function scanStringZUtf8( buf, base, entity ) {
+    var ch, str = "", code;
+    for (var i=base; buf[i]; i++) {
+        ch = buf[i];
+        if (ch < 0x80) { str += String.fromCharCode(ch); continue; }    // 1-byte
+        if (ch < 0xC0) { str += '\uFFFD'; continue; }                   // invalid multi-byte start (continuation byte)
+
+        ch2 = buf[++i];
+        if (ch2 < 0x80) { str += '\uFFFD' + StringFromCharCode(ch2); continue } // 7-bit ascii is invalid as continuation byte
+        else if (ch2 >= 0xC0) { str += '\uFFFD'; i--; continue; }               // utf8 multi-byte start char invalid as continuation byte
+        if (ch < 0xE0) { str += String.fromCharCode(((ch & 0x1F) <<  6) + (ch2 & 0x3F)); continue; } // 2-byte
+
+        ch3 = buf[++i];
+        if (ch < 0x80) { str += '\uFFFD' + StringFromCharCode(ch3); continue }
+        else if (ch3 >= 0xC0) { str += '\uFFFD'; i--; continue; }
+        if (ch < 0xF0) { str += String.fromCharCode(((ch & 0x0F) << 12) + ((ch2 & 0x3F) << 6) + (ch3 & 0x3F)); continue; } // 3-byte
+
+        ch4 = buf[++i];
+        if (ch4 < 0x80) { str += '\uFFFD' + StringFromCharCode(ch4); continue }
+        else if (ch4 >= 0xC0) { str += '\uFFFD'; i--; continue; }
+
+        // assemble the 4-byte codepoint, return overlong encoded single chars
+        var codepoint = ((ch & 0x7) << 18) + ((ch2 & 0x3F) << 12) + ((ch3 & 0x3F) << 6) + (ch4 & 0x3F);
+        if (codepoint < 0x10000) { str += String.fromCharcode(codepoint);  continue }   // overlong encoded single char
+        // if (codepoint >= 0x10FFFF) { str += '\uFFFD'; continue }                     // valid, but too many bits for utf16 (max 20) -- cannot occur per utf8 spec
+
+        // or convert the 4-byte char into a surrogate pair of utf16 chars
+        codepoint -= 0x10000;
+        str += String.fromCharCode(0xD800 + (codepoint >>> 10)) +
+               String.fromCharCode(0xDC00 + (codepoint & 0x3FF));
+    }
+    entity.val = str;
+    return (entity.end = i) + 1;
 }
 
 /*
@@ -193,6 +249,7 @@ function encodeJson( string, from, to, target, offset ) {
         else if (code === 0x5c) { target[offset++] = 0x5c; target[offset++] = 0x5c; }  // \
         else if (code <= 0x7F) target[offset++] = code;  // ascii
         else if (code >= 0xD800 && code <= 0xDFFF) {  // invalid
+// FIXME: surrogate pair! encode as 4-byte utf8
             target[offset++] = 0xEF; target[offset++] = 0xBF; target[offset++] = 0xBD;
         }
         else offset = encodeUtf8Char(code, target, offset); // multi-byte
