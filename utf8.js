@@ -162,9 +162,13 @@ function decodeUtf8( buf, base, bound ) {
     var ch, str = "", code;
     for (var i=base; i<bound; i++) {
         ch = buf[i];
-        if (ch < 0x80) str += String.fromCharCode(ch);  // 0xxx xxxx
-        else if (ch < 0xE0) str += String.fromCharCode(((ch & 0x1F) <<  6) + (buf[++i] & 0x3F));  // 110x xxxx  10xx xxxx
-        else if (ch < 0xF0) str += String.fromCharCode(((ch & 0x0F) << 12) + ((buf[++i] & 0x3F) << 6) + (buf[++i] & 0x3F));  // 1110 xxxx  10xx xxxx  10xx xxxx
+        if (ch < 0x80) str += String.fromCharCode(ch);  // 1-byte
+        else if (ch < 0xC0) str += '\uFFFD'; // invalid multi-byte start (continuation byte)
+        else if (ch < 0xE0) str += String.fromCharCode(((ch & 0x1F) <<  6) + (buf[++i] & 0x3F));  // 2-byte
+        else if (ch < 0xF0) str += String.fromCharCode(((ch & 0x0F) << 12) + ((buf[++i] & 0x3F) << 6) + (buf[++i] & 0x3F));  // 3-byte
+// TODO: sort by probability of occurrence
+// FIXME: javascript '\uD800\uDC01' encodes to <Buffer f0 90 80 81> ? but '\uD800' is a "replacement char" \ufffd
+        else { i += 4; ch = '\ufffd'; }
     }
     return str;
 }
