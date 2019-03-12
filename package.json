@@ -4,16 +4,15 @@
   "main": "index.js",
   "description": "js-only utf8 string to bytes conversions",
   "license": "Apache-2.0",
-  "repository": {
-    "url": "git://github.com/andrasq/node-q-utf8"
-  },
   "keywords": [ "js", "strings", "convert", "utf8", "Andras" ],
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
+
+  "author": "andrasq",
+  "readme": "see Readme.md in the repo",
+  "repository": { "type": "git", "url": "git://github.com/andrasq/node-q-utf8" },
+
   "scripts": {
+    "test": "node test-*.js",
     "coverage": "nyc --reporter lcov --reporter text node test-*.js",
-    "test": "node test-*.js"
+    "clean": "rm -rf .nyc_output coverage npm-debug.log"
   }
 }
