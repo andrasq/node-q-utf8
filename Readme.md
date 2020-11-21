@@ -24,11 +24,15 @@ starting at offset, and return the number of bytes written.  Does not check
 for overflow. The converted bytes are identical to `buffer.write`. Does not
 use `string.slice` or `buffer.write`.
 
+Also known as `encode`.
+
 ### qutf8.utf8_decode( buf, base, bound )
 
 return the utf8 encoded string in the buffer between offset and limit.
 Traverses the buffer, does not use `buffer.toString`. Note: for non-trivial
 strings buffer.toString() is faster.
+
+Also known as `decode`.
 
 ### qutf8.utf8_encodeJson( string, from, to, target, offset )
 
@@ -66,7 +70,7 @@ work-alike of `require('string_decoder')`.
 Change Log
 ----------
 
-- 0.1.3 - new scanStringZUtf8, fix invalid utf8 handling
+- 0.1.3 - new scanStringZUtf8, fix invalid utf8 handling, alias as `utf8.encode` and `utf8.decode`
 - 0.1.2 - base64 fixes, cleanups
 - 0.1.1 - speed up JsonDecoder, now up to 50% faster than `string_decoder`
 - 0.1.0 - initial version, to get it out there

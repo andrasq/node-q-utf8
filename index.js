@@ -17,5 +17,8 @@ module.exports = {
     // base64_decode: TBD
 
     JsonDecoder: JsonDecoder.JsonDecoder,
+
+    encode: utf8.encodeUtf8,
+    decode: utf8.decodeUtf8,
 };
 

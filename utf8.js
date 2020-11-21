@@ -44,6 +44,7 @@ function stringLength( buf, base, bound, encoding ) {
 }
 
 // count how many bytes of storage the string will require
+// The string must be valid utf8.
 function byteLength( string, from, to ) {
     var code, len = 0;
     for (var i=from; i<to; i++) {
