@@ -31,8 +31,7 @@ function makeTestStrings(chr1) {
     ];
 }
 
-for (var i=0; i<0xD800; i+=0x10) {
-//console.log("AR: %d: chr %s", i, i.toString(16));
+for (var i=0; i<=0xFFFF; i+=0x10) {
     var chr1 = String.fromCharCode(i);
     var strings = makeTestStrings(chr1);
 
@@ -65,47 +64,18 @@ for (var i=0; i<0xD800; i+=0x10) {
     }
 
     // encodeJson should write same strings as JSON
+    // Note that encodeJson does not surround the output in "..." quotes
+    // code points D800..DFFF are not valid utf8 (reserved for surrogate pairs), and all become codepoint FFFD
     for (var j=0; j<strings.length; j++) {
         var nb = utf8.encodeJson(strings[j], 0, strings[j].length, testbuf, 0);
-        testbuf.copy(sysbuf);
         var got = testbuf.toString('utf8', 0, nb);
-        var expect = JSON.stringify(strings[j]).slice(1, -1);
+        nb = sysbuf.write(JSON.stringify(strings[j]).slice(1, -1)); // system json encode, strip wrapping "..." quotes
+        var expect = sysbuf.toString('utf8', 0, nb);
         if (got !== expect) {
+            process.stdout.write('x');
             console.log("AR: mismatch on char %s combo %d: got %s vs expected %s", i.toString(16), j, stringBytes(got), stringBytes(expect));
-            var gotBuf = fromBuf(got);
-            var expectBuf = fromBuf(expect);
-            assert.deepEqual(gotBuf, expectBuf);
         }
-        else {
-            assert.equal(got, expect);
-        }
-    }
-}
-
-for (i=0xD800; i<0xFFFF; i+=0x10) {
-    var chr1 = String.fromCharCode(i);
-    var strings = makeTestStrings(chr1);
-
-    for (var j=0; j<strings.length; j++) {
-        var nb = utf8.encodeJson(strings[j], 0, strings[j].length, testbuf, 0);
-        testbuf.copy(sysbuf);
-        var got = testbuf.toString('utf8', 0, nb);
-        var expect = JSON.stringify(strings[j]).slice(1, -1);
-        if (got !== expect) {
-//
-// FIXME: does not match encoding of utf8 characters d800-ffff,
-// but both get converted to the same bytes.
-//
-            console.log("AR: mismatch on char %s combo %d: got %s vs expected %s", i.toString(16), j, stringBytes(got), stringBytes(expect));
-            var gotBuf = fromBuf(got);
-            var expectBuf = fromBuf(expect);
-            assert.deepEqual(gotBuf, expectBuf);
-//console.log("AR: as buffers", gotBuf, expectBuf);
-        }
-        else {
-            assert.equal(got, expect);
-            //assert.ok(compareStrings(i, testbuf.toString('utf8', 0, nb), JSON.stringify(strings[j]).slice(1, -1)), '' + testbuf.toString('utf8', 0, nb) + ' :: ' + strings[j]);
-        }
+        assert.deepEqual(testbuf, sysbuf);
     }
 }
 
@@ -164,7 +134,7 @@ module.exports = {
             ];
 
             for (var i=0; i<tests.length; i++) {
-                var testbuf = new Buffer(tests[i][0]);
+                var testbuf = fromBuf(tests[i][0]);
                 var entity = { val: '', end: 0 };
                 var next = utf8.scanStringZUtf8(testbuf, 0, entity);
                 t.equal(entity.val, tests[i][1]);
