@@ -1,7 +1,7 @@
 /**
  * calls to read/write utf8 text into buffers
  *
- * Copyright (C) 2016 Andras Radics
+ * Copyright (C) 2016-2020 Andras Radics
  * Licensed under the Apache License, Version 2.0
  *
  * 2016-05-06 - AR.
