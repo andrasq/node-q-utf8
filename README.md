@@ -70,7 +70,7 @@ work-alike of `require('string_decoder')`.
 Change Log
 ----------
 
-- 0.1.3 - new scanStringZUtf8, fix invalid utf8 handling, alias as `utf8.encode` and `utf8.decode`
+- 0.1.3 - normalize layout, new scanStringZUtf8, fix invalid utf8 handling, alias as `utf8.encode` and `utf8.decode`
 - 0.1.2 - base64 fixes, cleanups
 - 0.1.1 - speed up JsonDecoder, now up to 50% faster than `string_decoder`
 - 0.1.0 - initial version, to get it out there
