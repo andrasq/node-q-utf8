@@ -14,7 +14,7 @@ var fromBuf = eval('parseInt(process.versions.node) >= 6 ? Buffer.from : Buffer'
 var sysbuf = fromBuf([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 var testbuf = fromBuf([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 
-var utf8 = require('./utf8.js');
+var utf8 = require('../utf8.js');
 
 function makeTestStrings(chr1) {
     var chr2 = String.fromCharCode(i ^ 1);

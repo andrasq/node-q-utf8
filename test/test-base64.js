@@ -6,7 +6,7 @@
 'use strict';
 
 var assert = require('assert');
-var base64 = require('./base64');
+var base64 = require('../base64');
 var base64_encode = base64.encode;
 
 assert.equal(base64_encode(new Buffer("a")), "YQ==");

@@ -6,7 +6,7 @@
 
 'use strict';
 
-var JsonDecoder = require('./json-decoder').JsonDecoder;
+var JsonDecoder = require('../json-decoder').JsonDecoder;
 
 
 // quicktest:
