@@ -1,7 +1,7 @@
 /**
  * calls to read/write utf8 text into buffers
  *
- * Copyright (C) 2016-2020 Andras Radics
+ * Copyright (C) 2016-2021 Andras Radics
  * Licensed under the Apache License, Version 2.0
  *
  * 2016-05-06 - AR.
@@ -72,17 +72,14 @@ function utf8FragmentBytes( buf, base, bound ) {
 // The caller must filter out invalid utf8 code points.
 // Node inlines this and optimizes away the redundant 7-bit check at the top
 function encodeUtf8Char( code, target, offset ) {
-    if (code <= 0x7F) {
-        // 7 bits:  0xxx xxxx
+    if (code <= 0x7F) {         // 7 bits:  0xxx xxxx
         target[offset++] = code;
     }
-    else if (code <= 0x07FF) {
-        // 8..11 bits, 2-byte:  110x xxxx  10xx xxxx
+    else if (code <= 0x07FF) {  // 8..11 bits, 2-byte:  110x xxxx  10xx xxxx
         target[offset++] = 0xC0 | (code >> 6) & 0x3F;
         target[offset++] = 0x80 | code & 0x3F;
     }
-    else {
-        // 11..16 bits, 3-byte:  1110 xxxx  10xx xxxx  10xx xxxx
+    else if (code <= 0xFFFF) {  // 11..16 bits, 3-byte:  1110 xxxx  10xx xxxx  10xx xxxx
         target[offset++] = 0xE0 | (code >> 12) & 0x0F;
         target[offset++] = 0x80 | (code >> 6) & 0x3F;
         target[offset++] = 0x80 | (code) & 0x3F;
@@ -90,8 +87,18 @@ function encodeUtf8Char( code, target, offset ) {
     return offset;
 }
 
+function encodeUtf8SurrogatePair( code, code2, target, offset ) {
+    // 17..21 bits, 4-byte:  1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx
+    var codepoint = 0x10000 + ((code - 0xD800) << 10) + (code2 - 0xDC00);
+    target[offset++] = 0xF0 | (codepoint >> 18) & 0x07;
+    target[offset++] = 0x80 | (codepoint >> 12) & 0x3F;
+    target[offset++] = 0x80 | (codepoint >>  6) & 0x3F;
+    target[offset++] = 0x80 | (codepoint      ) & 0x3F;
+    return offset;
+}
+
 /*
- * write the utf8 string into the target buffer to offset
+ * write the utf8 string into the target buffer starting at offset
  * The buffer must be large enough to receive the entire converted string (not checked)
  * Notes:
  *   Utf8 stores control chars as-is, but json needs them \u escaped.
@@ -99,15 +106,20 @@ function encodeUtf8Char( code, target, offset ) {
  *   node encodes them all as FFFF - 2, FFFD (chars EF BF BD)
  */
 function encodeUtf8( string, from, to, target, offset ) {
-    var code;
+    var code, code2;
     for (var i=from; i<to; i++) {
         code = string.charCodeAt(i);
         if (code <= 0x7F) target[offset++] = code;
-        // overlong encode 0x00 to fix RegExp in BSON... except BSON reads it as two chars ?!
-        // also, writing is as <00> matches buf.write()
-        //if (code <= 0x7F) { if (code) target[offset++] = code; else { target[offset++] = 0xC0; target[offset++] = 0x80; } }
         else if (code >= 0xD800 && code <= 0xDFFF) {
-            target[offset++] = 0xEF; target[offset++] = 0xBF; target[offset++] = 0xBD;
+            var code2 = string.charCodeAt(i + 1);
+            if (i + 1 < to && code <= 0xDBFF && code2 >= 0xDC00 && code2 <= 0xDFFF) {
+                // valid leading,trailing surrogate pair containing a 20-bit code point
+                offset = encodeUtf8SurrogatePair(code, code2, target, offset);
+                i += 1;
+            } else {
+                // lone leading surrogate or bare trailing surrogate are invalid, become FFFD
+                offset = encodeUtf8Char(0xFFFD, target, offset);
+            }
         }
         else offset = encodeUtf8Char(code, target, offset);
     }
@@ -116,6 +128,7 @@ function encodeUtf8( string, from, to, target, offset ) {
 
 // just like encodeUtf8, but 00 bytes are overlong-encoded (runs 2.5-15% slower)
 // Note that the pointless comment strings in the source allow it to run 10% faster.
+// NOTE: overlong-encoded characters eg [0xC0, 0x80] are rejected by Buffer (converts to \uFFFD\uFFFD)
 function encodeUtf8Overlong( string, from, to, target, offset ) {
     var code;
     for (var i=from; i<to; i++) {
@@ -155,9 +168,9 @@ function encodeUtf8Overlong( string, from, to, target, offset ) {
 // AR: 1101 10xx xxxx xxxx -- 1101 11xx xxxx xxxx (good for 20-bit codepoints)
 // AR: see also https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
 //
-// Unpaired surrogates are invalid in UTFs. These include any value in the range D80016 to
+// "Unpaired surrogates are invalid in UTFs. These include any value in the range D80016 to
 // DBFF16 not followed by a value in the range DC0016 to DFFF16, or any value in the range
-// DC0016 to DFFF16 not preceded by a value in the range D80016 to DBFF16.
+// DC0016 to DFFF16 not preceded by a value in the range D80016 to DBFF16."
 
 function decodeUtf8( buf, base, bound ) {
     var ch, str = "", code;
@@ -246,6 +259,7 @@ function encodeJsonControlChar( code, target, offset ) {
  * JSON is utf8 with the 32 control chars 0x00 - 0x1F \u escaped, eg '\u001F'.
  * Multi-byte utf8 chars are valid in json strings.
  */
+function hexcode(v) { return v < 10 ? 0x30 + v : 0x61 + v - 10 }
 function encodeJson( string, from, to, target, offset ) {
     var code;
     for (var i=from; i<to; i++) {
@@ -254,9 +268,17 @@ function encodeJson( string, from, to, target, offset ) {
         else if (code === 0x22) { target[offset++] = 0x5c; target[offset++] = 0x22; }  // "
         else if (code === 0x5c) { target[offset++] = 0x5c; target[offset++] = 0x5c; }  // \
         else if (code <= 0x7F) target[offset++] = code;  // ascii
-        else if (code >= 0xD800 && code <= 0xDFFF) {  // invalid
-// FIXME: surrogate pair! encode as 4-byte utf8
-            target[offset++] = 0xEF; target[offset++] = 0xBF; target[offset++] = 0xBD;
+        else if (code >= 0xD800 && code <= 0xDFFF) {  // surrogate
+            var code2 = string.charCodeAt(i + 1);
+            if (i + 1 < to && code <= 0xDBFF && code2 >= 0xDC00 && code2 <= 0xDFFF) {
+                offset = encodeUtf8SurrogatePair(code, code2, target, offset);
+                i += 1;
+            } else {
+                // JSON encodes an invalid surrogate as a literal "\uxxxx" unicode hex char
+                target[offset++] = '\\'.charCodeAt(0); target[offset++] = 'u'.charCodeAt(0);
+                target[offset++] = hexcode((code >> 12) & 0xf); target[offset++] = hexcode((code >> 8) & 0xf);
+                target[offset++] = hexcode((code >>  4) & 0xf); target[offset++] = hexcode((code >> 0) & 0xf);
+            }
         }
         else offset = encodeUtf8Char(code, target, offset); // multi-byte
     }
