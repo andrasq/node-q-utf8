@@ -33,7 +33,9 @@ function stringLength( buf, base, bound, encoding ) {
     case 'utf8':
         for (var i=base; i<bound; i++) {
             // multi-byte utf8 chars are of the form [11...][10...][10...]
-            if (buf[i] <= 0x7F || (buf[i] & 0xC0) !== 0x80) length += 1;
+            if (buf[i] <= 0x7F) length += 1;
+            else if ((buf[i] & 0xF8) === 0xF0) length += 2; // surrogate pair
+            else if ((buf[i] & 0xC0) !== 0x80) length += 1; // start of multi-byte char
         }
         break;
     case 'hex': return (bound - base) * 2;
@@ -49,7 +51,17 @@ function byteLength( string, from, to ) {
     var code, len = 0;
     for (var i=from; i<to; i++) {
         code = string.charCodeAt(i);
-        len += (code <= 0x007F) ? 1 : (code <= 0x07FF) ? 2 : 3;
+        if (code < 0xD800 || code > 0xDFFF) {
+            // valid 16-bit codepoint
+            len += (code <= 0x007F) ? 1 : (code <= 0x07FF) ? 2 : 3;
+        }
+        else if (i + 1 < to) {
+            // maybe a surrogate pair holding a 20-bit codepoint
+            var code2 = string.charCodeAt(i + 1);
+            if (code < 0xDC00 && code2 >= 0xDC00 && code2 <= 0xDFFF) (len += 4, i++);
+            else len += 3;
+        }
+        else len += 3;
     }
     return len;
 }
