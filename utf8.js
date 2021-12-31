@@ -172,6 +172,13 @@ function encodeUtf8Overlong( string, from, to, target, offset ) {
 // DBFF16 not followed by a value in the range DC0016 to DFFF16, or any value in the range
 // DC0016 to DFFF16 not preceded by a value in the range D80016 to DBFF16."
 
+// convert the 4-byte utf8 encoding into a surrogate pair of utf16 chars
+function decodeUtf8SurrogatePair( b1, b2, b3, b4 ) {
+    var codepoint = ((b1 & 0x07) << 18) + ((b2 & 0x3f) << 12) + ((b3 & 0x3f) << 6) + (b4 & 0x3f);
+    return String.fromCharCode(0xD800 + ((codepoint - 0x10000) >> 10))
+         + String.fromCharCode(0xDC00 + ((codepoint - 0x10000) & 0x3FF));
+}
+
 function decodeUtf8( buf, base, bound ) {
     var ch, str = "", code;
     for (var i=base; i<bound; i++) {
@@ -180,9 +187,8 @@ function decodeUtf8( buf, base, bound ) {
         else if (ch < 0xC0) str += '\uFFFD'; // invalid multi-byte start (continuation byte)
         else if (ch < 0xE0) str += String.fromCharCode(((ch & 0x1F) <<  6) + (buf[++i] & 0x3F));  // 2-byte
         else if (ch < 0xF0) str += String.fromCharCode(((ch & 0x0F) << 12) + ((buf[++i] & 0x3F) << 6) + (buf[++i] & 0x3F));  // 3-byte
-// TODO: sort by probability of occurrence
-// FIXME: javascript '\uD800\uDC01' encodes to <Buffer f0 90 80 81> ? but '\uD800' is a "replacement char" \ufffd
-        else { i += 4; ch = '\ufffd'; }
+        else if (ch < 0xF8) str += decodeUtf8SurrogatePair(ch, buf[++i], buf[++i], buf[++i]); // 4-byte
+        else str += '\ufffd';
     }
     return str;
 }
