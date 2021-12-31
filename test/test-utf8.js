@@ -6,6 +6,7 @@
 'use strict';
 
 var assert = require('assert');
+var util = require('util');
 
 // allocBuf and fromBuf from qibl 1.4.0
 var allocBuf = eval('parseInt(process.versions.node) >= 6 ? Buffer.allocUnsafe : Buffer');
@@ -20,6 +21,7 @@ function makeTestStrings(chr1) {
     var chr2 = String.fromCharCode(i ^ 1);
     var chr3 = String.fromCharCode(0x101);
     var chr4 = String.fromCharCode(0x1001);
+    var chrS = String.fromCharCode(chr1.charCodeAt(0) + 1024);
     return [
         chr1,                    // only char
         "ab" + chr1,             // last
@@ -28,10 +30,12 @@ function makeTestStrings(chr1) {
         "a" + chr1 + chr2 + "bc",  // adjacent
         "a" + chr1 + chr3 + "bc",  // adjacent to 2-byte
         "a" + chr1 + chr4 + "bc",  // adjacent to 3-byte
+        chr1 + chrS,            // make a surrogate pair or two invalid chars
+        "a" + chr1 + chrS + "bc",
     ];
 }
 
-for (var i=0; i<=0xFFFF; i+=0x10) {
+for (var i=0; i<=0xFFFF; i+=(i<128 ? 1 : 0x10)) {
     var chr1 = String.fromCharCode(i);
     var strings = makeTestStrings(chr1);
 
@@ -45,7 +49,9 @@ for (var i=0; i<=0xFFFF; i+=0x10) {
     // stringLength should correctly count multi-byte utf8 characters
     for (var j=0; j<strings.length; j++) {
         var len = sysbuf.write(strings[j], 0);
-        assert.equal(utf8.stringLength(sysbuf, 0, len, 'utf8'), strings[j].length);
+        var got = utf8.stringLength(sysbuf, 0, len, 'utf8');
+        assert.equal(got, strings[j].length, 'mismatch on length: ' + got + ' != ' + len + '; '
+            + strings[j] + ' => ' + util.inspect(sysbuf.slice(0, len)));
     }
 
     // decodeUtf8 should recover the same string as Buffer.toString
@@ -53,7 +59,7 @@ for (var i=0; i<=0xFFFF; i+=0x10) {
         var len = sysbuf.write(strings[j], 0);
         var str = sysbuf.toString('utf8', 0, len);
         var utf = utf8.decodeUtf8(sysbuf, 0, len);
-        assert.equal(utf, str);
+        assert.equal(utf, str, 'mismatch on string ' + j + ': ' + util.inspect(sysbuf.slice(0, len)));
     }
 
     // byteLength should count the number of bytes required for the substring
@@ -75,7 +81,7 @@ for (var i=0; i<=0xFFFF; i+=0x10) {
             process.stdout.write('x');
             console.log("AR: mismatch on char %s combo %d: got %s vs expected %s", i.toString(16), j, stringBytes(got), stringBytes(expect));
         }
-        assert.deepEqual(testbuf, sysbuf);
+        assert.deepEqual(testbuf, sysbuf, j + ": error on: " + strings[j]);
     }
 }
 
